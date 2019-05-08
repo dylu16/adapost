@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from dateutil import relativedelta
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -31,6 +34,18 @@ class Animal(models.Model):
         self.full_clean()
         super().save(force_insert, force_update, using, update_fields)
 
+    @property
+    def varsta(self) -> str:
+        today = datetime.today()
+        data_nasterii = datetime(year=self.anul, month=self.luna, day=1)
+        diff = relativedelta.relativedelta(today, data_nasterii)
+        if diff.years and diff.months:
+            return f'{diff.years} ani si {diff.months} luni'
+        elif diff.years and not diff.months:
+            return f'{diff.years} ani'
+        else:
+            return f'{diff.months} luni'
+
 
 class Rezerva(models.Model):
     class Meta:
@@ -48,7 +63,7 @@ class Rezerva(models.Model):
         if self.animal and self.dimensiune != self.animal.talie:
             raise ValidationError('Dimensiuna custii este nepotrivita')
 
-        if self.animal and  self.animal.este_adoptat == True:
+        if self.animal and self.animal.este_adoptat is True:
             raise ValidationError('Animalul este adoptat. Rezerva este libera.')
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
